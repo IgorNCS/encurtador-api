@@ -69,7 +69,9 @@ export class LinkService {
   async findOne(id: string): Promise<Link> {
     try {
       const user = this.clsService.get('user');
-      const link = await this.modelRepository.findOne({where:{id:id,userId:user.sid}});
+      const link = await this.modelRepository.findOne({
+        where: { id: id, userId: user.sid },
+      });
       if (!link) throw new NotFoundException('Link não encontrado');
       return link;
     } catch (error) {
@@ -95,7 +97,9 @@ export class LinkService {
   async remove(id: string) {
     try {
       const user = this.clsService.get('user');
-      const link = await this.modelRepository.findOne({where:{id:id,userId:user.sid}});
+      const link = await this.modelRepository.findOne({
+        where: { id: id, userId: user.sid },
+      });
       if (!link) throw new NotFoundException('Link não encontrado');
       return await this.modelRepository.softRemove(link);
     } catch (error) {
@@ -103,6 +107,33 @@ export class LinkService {
     }
   }
 
+  async incrementClicks(encurtadaURL: string): Promise<void> {
+    try {
+      const shortener = await this.modelRepository.findOne({
+        where: { encurtadaURL: encurtadaURL },
+      });
+
+      if (!shortener) throw new NotFoundException('URL encurtada não encontrada');
+
+      shortener.clicks += 1;
+
+      await this.modelRepository.save(shortener);
+    } catch (error) {
+      console.error('Erro ao incrementar o número de cliques:', error);
+    }
+  }
+
+  async findOneByEncurtadaURL(encurtadaURL: string): Promise<Link> {
+    try {
+      const link = await this.modelRepository.findOne({
+        where: { encurtadaURL: encurtadaURL },
+      });
+      if (!link) throw new NotFoundException('Link não encontrado');
+      return link;
+    } catch (error) {
+      throw error;
+    }
+  }
   private generateShortLink(): string {
     const characters =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
