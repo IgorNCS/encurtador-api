@@ -5,6 +5,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ClsService } from 'nestjs-cls';
 import * as jwt from 'jsonwebtoken';
+import { decode } from 'punycode';
 
 @Injectable()
 export class AuthService {
@@ -67,8 +68,9 @@ export class AuthService {
         },
       );
 
-      const decoded = jwt.decode(response.data.access_token);
-      this.clsService.set('user', {decoded,resource_access:decoded.resource_access}); 
+      const decoded = jwt.decode(response.data.access_token) as any; 
+      this.clsService.set('user', { decoded, resource_access: decoded.resource_access });
+
 
       return {
         success: true,
@@ -134,6 +136,7 @@ export class AuthService {
         },
       );
 
+      this.clsService.get('user');
       this.clsService.set('user', undefined);
 
       return { success: true, message: 'Logout realizado com sucesso' };
