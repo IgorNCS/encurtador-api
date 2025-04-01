@@ -109,15 +109,15 @@ export class LinkService {
 
   async incrementClicks(encurtadaURL: string): Promise<void> {
     try {
-      const shortener = await this.modelRepository.findOne({
+      const link = await this.modelRepository.findOne({
         where: { encurtadaURL: encurtadaURL },
       });
 
-      if (!shortener) throw new NotFoundException('URL encurtada não encontrada');
+      if (!link) throw new NotFoundException('URL encurtada não encontrada para incrementar o número de cliques.');
 
-      shortener.clicks += 1;
+      link.clicks += 1;
 
-      await this.modelRepository.save(shortener);
+      await this.modelRepository.save(link);
     } catch (error) {
       console.error('Erro ao incrementar o número de cliques:', error);
     }
