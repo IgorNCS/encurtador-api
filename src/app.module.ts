@@ -4,10 +4,16 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { KeycloakModule } from './keycloak/keycloak.module';
 import { AuthModule } from './auth/auth.module';
+import { ClsModule } from 'nestjs-cls';
 
 @Module({
   imports: [
     AuthModule,
+    ClsModule.forRoot({
+      global: true,
+      middleware: { mount: true },
+      interceptor: { mount: false },
+    }),
     ConfigModule.forRoot({
     isGlobal: true,
   }),
