@@ -3,16 +3,17 @@ import axios, { AxiosResponse } from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-
-
+import { ClsService } from 'nestjs-cls';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly configService: ConfigService) {}
-
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly clsService: ClsService,
+  ) {}
 
   async register(user: RegisterDto) {
-
     const adminToken = await this.getAdminToken();
 
     try {
@@ -48,7 +49,6 @@ export class AuthService {
     }
   }
 
-
   async login(credentials: LoginDto) {
     try {
       const response = await axios.post(
@@ -66,6 +66,9 @@ export class AuthService {
           },
         },
       );
+
+      const decoded = jwt.decode(response.data.access_token);
+      this.clsService.set('user', {decoded,resource_access:decoded.resource_access}); 
 
       return {
         success: true,
@@ -131,6 +134,8 @@ export class AuthService {
         },
       );
 
+      this.clsService.set('user', undefined);
+
       return { success: true, message: 'Logout realizado com sucesso' };
     } catch (error) {
       return {
@@ -157,7 +162,6 @@ export class AuthService {
           },
         },
       );
-      console.log(response)
 
       return response.data.access_token;
     } catch (error) {
