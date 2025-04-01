@@ -9,11 +9,11 @@ export class RedirecionamentoController {
   constructor(private readonly redirecionamentoService: RedirecionamentoService) {}
 
 
-  @Get(':shortenedUrl')
+  @Get(':encurtadaUrl')
   @Redirect('', 302)
-  async redirectToOriginalUrl(@Param('shortenedUrl') shortenedUrl: string) {
-      const originalUrl = await this.redirecionamentoService.redirecionarParaOriginalUrl(shortenedUrl);
-      return { url: `http://${originalUrl}` };
+  async redirectToOriginalUrl(@Param('encurtadaUrl') encurtadaUrl: string) {
+      const originalUrl = await this.redirecionamentoService.redirecionarParaOriginalUrl(encurtadaUrl);
+      return { url: originalUrl };
   }
 
 }

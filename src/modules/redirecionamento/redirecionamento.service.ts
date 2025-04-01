@@ -5,11 +5,10 @@ import { LinkService } from '../link/link.service';
 export class RedirecionamentoService {
   constructor(private readonly linkService: LinkService) {}
 
-  async redirecionarParaOriginalUrl(shortenedURL: string): Promise<string> {
+  async redirecionarParaOriginalUrl(encurtadaURL: string): Promise<string> {
     try {
-      const originalUrl =
-        await this.linkService.findOneByEncurtadaURL(shortenedURL);
-      await this.linkService.incrementClicks(shortenedURL);
+      const originalUrl = await this.linkService.findOneByEncurtadaURL(encurtadaURL);
+      await this.linkService.incrementClicks(encurtadaURL);
       return originalUrl.originalURL;
     } catch (error) {
       throw error;
