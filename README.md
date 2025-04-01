@@ -96,3 +96,12 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+POSTGRES_PORT
+
+
+
+yarn typeorm migration:create --dataSource src/database/data-source.ts
+yarn typeorm migration:generate ./src/database/migrations/create_link -d src/database/data-source.ts
+yarn typeorm migration:run --dataSource src/database/data-source.ts
