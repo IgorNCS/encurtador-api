@@ -1,19 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RedirecionamentoService } from './redirecionamento.service';
+import { RedirectService } from './redirect.service';
 import { LinkService } from '../link/link.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Link } from '../link/entities/link.entity';
 import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 
-describe('RedirecionamentoService', () => {
-  let service: RedirecionamentoService;
+describe('RedirectService', () => {
+  let service: RedirectService;
   let linkService: LinkService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        RedirecionamentoService,
+        RedirectService,
         {
           provide: LinkService,
           useValue: {
@@ -31,7 +31,7 @@ describe('RedirecionamentoService', () => {
       ],
     }).compile();
 
-    service = module.get<RedirecionamentoService>(RedirecionamentoService);
+    service = module.get<RedirectService>(RedirectService);
     linkService = module.get<LinkService>(LinkService);
   });
 
@@ -39,7 +39,7 @@ describe('RedirecionamentoService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('redirecionarParaOriginalUrl', () => {
+  describe('redirectToOriginalURL', () => {
     it('deve redirecionar para a URL original', async () => {
       const encurtadaURL = 'A1b2C3';
       const originalURL = 'http://www.google.com';
@@ -53,7 +53,7 @@ describe('RedirecionamentoService', () => {
         updatedAt: new Date(),
       } as Link);
 
-      const result = await service.redirecionarParaOriginalUrl(encurtadaURL);
+      const result = await service.redirectToOriginalURL(encurtadaURL);
 
       expect(linkService.findOneByEncurtadaURL).toHaveBeenCalledWith(encurtadaURL);
       expect(linkService.incrementClicks).toHaveBeenCalledWith(encurtadaURL);
@@ -68,7 +68,7 @@ describe('RedirecionamentoService', () => {
       );
 
       await expect(
-        service.redirecionarParaOriginalUrl(encurtadaURL),
+        service.redirectToOriginalURL(encurtadaURL),
       ).rejects.toThrowError(NotFoundException);
     });
   });

@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { LinkService } from '../link/link.service';
 
 @Injectable()
-export class RedirecionamentoService {
+export class RedirectService {
   constructor(private readonly linkService: LinkService) {}
 
-  async redirecionarParaOriginalUrl(encurtadaURL: string): Promise<string> {
+  async redirectToOriginalURL(encurtadaURL: string): Promise<string> {
     try {
       const originalUrl = await this.linkService.findOneByEncurtadaURL(encurtadaURL);
       await this.linkService.incrementClicks(encurtadaURL);

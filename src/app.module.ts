@@ -8,7 +8,7 @@ import { ClsModule } from 'nestjs-cls';
 import { LinkModule } from './modules/link/link.module';
 import { KeycloakUserMiddleware } from './keycloak/keycloakAuthGuard';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RedirecionamentoModule } from './modules/redirecionamento/redirecionamento.module';
+import { RedirectModule } from './modules/redirect/redirect.module';
 
 @Module({
   imports: [
@@ -36,7 +36,7 @@ import { RedirecionamentoModule } from './modules/redirecionamento/redirecioname
   }),
   KeycloakModule,
   LinkModule,
-  RedirecionamentoModule],
+  RedirectModule,
   controllers: [AppController],
   providers: [AppService],
 })

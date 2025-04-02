@@ -1,27 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RedirecionamentoController } from './redirecionamento.controller';
-import { RedirecionamentoService } from './redirecionamento.service';
+import { RedirectController } from './redirect.controller';
+import { RedirectService } from './redirect.service';
 import { NotFoundException, Redirect } from '@nestjs/common';
 
-describe('RedirecionamentoController', () => {
-    let controller: RedirecionamentoController;
-    let service: RedirecionamentoService;
+describe('RedirectController', () => {
+    let controller: RedirectController;
+    let service: RedirectService;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            controllers: [RedirecionamentoController],
+            controllers: [RedirectController],
             providers: [
                 {
-                    provide: RedirecionamentoService,
+                    provide: RedirectService,
                     useValue: {
-                        redirecionarParaOriginalUrl: jest.fn(),
+                        redirectToOriginalURL: jest.fn(),
                     },
                 },
             ],
         }).compile();
 
-        controller = module.get<RedirecionamentoController>(RedirecionamentoController);
-        service = module.get<RedirecionamentoService>(RedirecionamentoService);
+        controller = module.get<RedirectController>(RedirectController);
+        service = module.get<RedirectService>(RedirectService);
     });
 
     it('should be defined', () => {
@@ -33,24 +33,24 @@ describe('RedirecionamentoController', () => {
             const encurtadaURL = 'shortUrl';
             const originalUrl = 'http://www.google.com';
 
-            (service.redirecionarParaOriginalUrl as jest.Mock).mockResolvedValue(originalUrl);
+            (service.redirectToOriginalURL as jest.Mock).mockResolvedValue(originalUrl);
 
-            const result = await controller.redirectToOriginalUrl(encurtadaURL);
+            const result = await controller.redirectToOriginalURL(encurtadaURL);
 
-            expect(service.redirecionarParaOriginalUrl).toHaveBeenCalledWith(encurtadaURL);
+            expect(service.redirectToOriginalURL).toHaveBeenCalledWith(encurtadaURL);
             expect(result).toEqual({ url: originalUrl });
         });
 
         it('deve lancar um erro caso a URL nao seja encontrada', async () => {
             const encurtadaURL = 'shortUrl';
 
-            (service.redirecionarParaOriginalUrl as jest.Mock).mockRejectedValue(
+            (service.redirectToOriginalURL as jest.Mock).mockRejectedValue(
                 new NotFoundException(
                     `URL encurtada ${encurtadaURL} nao foi encontrada.`,
                 ),
             );
 
-            await expect(controller.redirectToOriginalUrl(encurtadaURL)).rejects.toThrowError(
+            await expect(controller.redirectToOriginalURL(encurtadaURL)).rejects.toThrowError(
                 NotFoundException,
             );
         });
