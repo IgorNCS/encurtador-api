@@ -3,9 +3,10 @@ import { LinkService } from './link.service';
 import { LinkController } from './link.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Link } from './entities/link.entity';
+import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Link])],
+  imports: [TypeOrmModule.forFeature([Link]), UserModule],
   controllers: [LinkController],
   providers: [LinkService],
 })

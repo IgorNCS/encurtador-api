@@ -9,6 +9,7 @@ import { LinkModule } from './modules/link/link.module';
 import { KeycloakUserMiddleware } from './keycloak/keycloakAuthGuard';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RedirectModule } from './modules/redirect/redirect.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -37,6 +38,8 @@ import { RedirectModule } from './modules/redirect/redirect.module';
   KeycloakModule,
   LinkModule,
   RedirectModule,
+  UserModule
+],
   controllers: [AppController],
   providers: [AppService],
 })

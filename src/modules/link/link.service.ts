@@ -1,46 +1,47 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateLinkDto } from './dto/request/create-link.dto';
 import { UpdateLinkDto } from './dto/request/update-link.dto';
-import { ClsService } from 'nestjs-cls';
 import { Link } from './entities/link.entity';
 import { Between, FindManyOptions, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationLinkRequest } from './dto/request/findall-link.dto';
-import { FindAllLinkResponseDTO } from './dto/response/findall-link.response.dto';
+import { LinkResponseDTO } from './dto/response/link.response.dto';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class LinkService {
   constructor(
     @InjectRepository(Link)
     private modelRepository: Repository<Link>,
-    private readonly clsService: ClsService,
+    private readonly userService:UserService
   ) {}
-  create(createLinkDto: CreateLinkDto): Promise<Link> {
+  async create(createLinkDto: CreateLinkDto): Promise<Link> {
     try {
       const link = new Link();
-      const user = this.clsService.get('user');
-      if (user) link.userId = user.sid;
-      link.originalURL = createLinkDto.url;
-      link.encurtadaURL = this.generateShortLink();
+      const user = this.userService.getOrNull();
+      if(user) link.userId = user.sid
 
-      const saved = this.modelRepository.save(link);
+
+      link.originalURL = createLinkDto.url;
+      link.encurtadaURL = this.createEncurtadaURL();
+
+      const saved = await this.modelRepository.save(link);
       return saved;
     } catch (error) {
       throw error;
     }
   }
 
-  async findAll(query: PaginationLinkRequest): Promise<FindAllLinkResponseDTO> {
+  async findAll(query: PaginationLinkRequest): Promise<LinkResponseDTO> {
     try {
       const { initialDate, finalDate, page = 1, limit = 10 } = query;
       const where: any = {};
-      const user = this.clsService.get('user');
-      if (!user) throw new NotFoundException('Usuário não encontrado');
+      const user = this.userService.get();
       where.userId = user.sid;
       if (initialDate && finalDate) {
         where.createdAt = Between(initialDate, finalDate);
       }
-      const skip = ((page || 1) - 1) * (limit || 10);
+      const skip = this.calculateSkip(page, limit);
 
       const findOptions: FindManyOptions<Link> = {
         order: {
@@ -68,11 +69,7 @@ export class LinkService {
 
   async findOne(id: string): Promise<Link> {
     try {
-      const user = this.clsService.get('user');
-      const link = await this.modelRepository.findOne({
-        where: { id: id, userId: user.sid },
-      });
-      if (!link) throw new NotFoundException('Link não encontrado');
+      const link = await this.findLinkByIdAndUser(id)
       return link;
     } catch (error) {
       throw error;
@@ -81,26 +78,22 @@ export class LinkService {
 
   async update(id: string, updateLinkDto: UpdateLinkDto) {
     try {
-      const user = this.clsService.get('user');
-      const link = await this.modelRepository.preload({
-        id,
-        userId: user.sid,
-        ...updateLinkDto,
+      const link = await this.findLinkByIdAndUser(id);
+
+      Object.keys(updateLinkDto).forEach((key) => {
+        link[key] = updateLinkDto[key];
       });
-      if (!link) throw new NotFoundException('Link não encontrado');
+
       return await this.modelRepository.save(link);
     } catch (error) {
       throw error;
     }
   }
 
+
   async remove(id: string) {
     try {
-      const user = this.clsService.get('user');
-      const link = await this.modelRepository.findOne({
-        where: { id: id, userId: user.sid },
-      });
-      if (!link) throw new NotFoundException('Link não encontrado');
+      const link = await this.findLinkByIdAndUser(id);
       return await this.modelRepository.softRemove(link);
     } catch (error) {
       throw error;
@@ -109,32 +102,28 @@ export class LinkService {
 
   async incrementClicks(encurtadaURL: string): Promise<void> {
     try {
-      const link = await this.modelRepository.findOne({
-        where: { encurtadaURL: encurtadaURL },
-      });
-
-      if (!link) throw new NotFoundException('URL encurtada não encontrada para incrementar o número de cliques.');
-
+      const link = await this.findOneByEncurtadaURL(encurtadaURL);
       link.clicks += 1;
-
       await this.modelRepository.save(link);
     } catch (error) {
       console.error('Erro ao incrementar o número de cliques:', error);
+      throw error;
     }
   }
 
+  //melhorar nome das funcoes
   async findOneByEncurtadaURL(encurtadaURL: string): Promise<Link> {
     try {
       const link = await this.modelRepository.findOne({
         where: { encurtadaURL: encurtadaURL },
       });
-      if (!link) throw new NotFoundException('Link não encontrado');
+      if (!link) throw new NotFoundException('Link not found');
       return link;
     } catch (error) {
       throw error;
     }
   }
-  private generateShortLink(): string {
+  private createEncurtadaURL(): string {
     const characters =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let shortLink = '';
@@ -146,4 +135,23 @@ export class LinkService {
     }
     return shortLink;
   }
+
+
+
+  private async findLinkByIdAndUser(id: string): Promise<Link> {
+    const user = this.userService.get();
+    const link = await this.modelRepository.findOne({
+        where: { id: id, userId: user.sid },
+    });
+    if (!link) {
+        throw new NotFoundException('Link not found');
+    }
+    return link;
 }
+
+private calculateSkip(page: number, limit: number): number {
+  return (page - 1) * limit;
+}
+
+}
+

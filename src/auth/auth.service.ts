@@ -1,24 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import axios, { AxiosResponse } from 'axios';
-import { ConfigService } from '@nestjs/config';
 import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { ClsService } from 'nestjs-cls';
+import { DecodedToken, keycloakResponse, LoginDto, LoginResponse } from './dto/login.dto';
 import * as jwt from 'jsonwebtoken';
-import { decode } from 'punycode';
+import { HttpService } from '@nestjs/axios';
+import { catchError, firstValueFrom } from 'rxjs';
+import { UserService } from 'src/modules/user/user.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly configService: ConfigService,
-    private readonly clsService: ClsService,
+    private readonly httpService: HttpService,
+    private readonly userService:UserService
   ) {}
 
   async register(user: RegisterDto) {
-    const adminToken = await this.getAdminToken();
-
     try {
-      const response = await axios.post(
+      const adminToken = await this.getAdminToken();
+      const response = await firstValueFrom(this.httpService.post<any>(
         `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users`,
         {
           username: user.username,
@@ -30,7 +28,7 @@ export class AuthService {
               value: user.password,
               temporary: false,
             },
-          ],
+          ],          
         },
         {
           headers: {
@@ -38,7 +36,9 @@ export class AuthService {
             'Content-Type': 'application/json',
           },
         },
-      );
+      ).pipe(catchError((error) => {throw error}))
+    );
+    
 
       return { success: true, message: 'Usuário registrado com sucesso' };
     } catch (error) {
@@ -50,33 +50,35 @@ export class AuthService {
     }
   }
 
-  async login(credentials: LoginDto) {
+  async login(credentials: LoginDto):Promise<LoginResponse|any> {
     try {
-      const response = await axios.post(
-        `${process.env.KEYCLOAK_AUTH_SERVER_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,
-        new URLSearchParams({
-          client_id: process.env.KEYCLOAK_CLIENT_ID || '',
-          client_secret: process.env.KEYCLOAK_SECRET || '',
-          grant_type: 'password',
-          username: credentials.username,
-          password: credentials.password,
-        }),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+      const { data } = await firstValueFrom(
+        this.httpService.post<keycloakResponse>(
+          `${process.env.KEYCLOAK_AUTH_SERVER_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,
+          new URLSearchParams({
+            client_id: process.env.KEYCLOAK_CLIENT_ID || '',
+            client_secret: process.env.KEYCLOAK_SECRET || '',
+            grant_type: 'password',
+            username: credentials.username,
+            password: credentials.password,
+          }),
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
           },
-        },
+        ).pipe(catchError((error) => {throw error})),
       );
 
-      const decoded = jwt.decode(response.data.access_token) as any; 
-      this.clsService.set('user', { decoded, resource_access: decoded.resource_access });
+      const decoded:DecodedToken = jwt.decode(data.access_token) as any;
 
+      this.userService.create(decoded);
 
       return {
         success: true,
-        access_token: response.data.access_token,
-        refresh_token: response.data.refresh_token,
-        expires_in: response.data.expires_in,
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_in: data.expires_in,
       };
     } catch (error) {
       return {
@@ -89,7 +91,7 @@ export class AuthService {
 
   async refreshToken(token: string) {
     try {
-      const response = await axios.post(
+      const {data} = await firstValueFrom(this.httpService.post<keycloakResponse>(
         `${process.env.KEYCLOAK_AUTH_SERVER_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,
         new URLSearchParams({
           client_id: process.env.KEYCLOAK_CLIENT_ID || '',
@@ -102,13 +104,14 @@ export class AuthService {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
         },
-      );
+      ).pipe(catchError((error) => {throw error})));
+      console.log(data)
 
       return {
         success: true,
-        access_token: response.data.access_token,
-        refresh_token: response.data.refresh_token,
-        expires_in: response.data.expires_in,
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_in: data.expires_in,
       };
     } catch (error) {
       return {
@@ -121,7 +124,7 @@ export class AuthService {
 
   async logout(token: string) {
     try {
-      await axios.post(
+      await this.httpService.post(
         `${process.env.KEYCLOAK_AUTH_SERVER_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/logout`,
         new URLSearchParams({
           client_id: process.env.KEYCLOAK_CLIENT_ID || '',
@@ -136,8 +139,7 @@ export class AuthService {
         },
       );
 
-      this.clsService.get('user');
-      this.clsService.set('user', undefined);
+      this.userService.destroy();
 
       return { success: true, message: 'Logout realizado com sucesso' };
     } catch (error) {
@@ -151,7 +153,7 @@ export class AuthService {
 
   private async getAdminToken() {
     try {
-      const response = await axios.post(
+      const response = await this.httpService.post(
         `${process.env.KEYCLOAK_AUTH_SERVER_URL}/realms/master/protocol/openid-connect/token`,
         new URLSearchParams({
           client_id: 'admin-cli',
@@ -166,9 +168,11 @@ export class AuthService {
         },
       );
 
-      return response.data.access_token;
+      return 'response.data.access_token';
     } catch (error) {
       throw new Error(`Erro ao obter token de admin: ${error.message}`);
     }
   }
 }
+
+

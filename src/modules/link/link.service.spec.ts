@@ -41,7 +41,7 @@ describe('LinkService', () => {
   });
 
   describe('create', () => {
-    it('Deve retornar sucesso ao criar um link', async () => {
+    it('should return success when creating a link', async () => {
       const createLinkDto = { url: 'http://www.example.com' };
       const userId = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dc364'; 
       const savedLink = {
@@ -64,7 +64,7 @@ describe('LinkService', () => {
   });
 
   describe('findAll', () => {
-    it('deve retornar links quando o usuário está logado', async () => {
+    it('should return links when user is logged in', async () => {
       const findAllQuery = {
         limit: 10,
         offset: 0,
@@ -108,10 +108,10 @@ describe('LinkService', () => {
       expect(result.list).toEqual(links);
     });
 
-    it('deve lançar um erro quando o usuário não está logado', async () => {
+    it('should throw an error when the user is not logged in', async () => {
       jest.spyOn(clsService, 'get').mockReturnValue(null);
 
-      await expect(service.findAll({})).rejects.toThrowError('Usuário não encontrado');
+      await expect(service.findAll({})).rejects.toThrowError('User not found');
     });
   });
 });

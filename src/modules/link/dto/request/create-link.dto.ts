@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments, Validate, ValidationOptions, registerDecorator } from 'class-validator';
 
 @ValidatorConstraint({ name: 'isUrlWithProtocol', async: false })
@@ -27,5 +28,6 @@ export class CreateLinkDto {
     @IsNotEmpty()
     @IsString()
     @IsUrlWithProtocol()
+    @ApiProperty({ example: 'http://example.com' })
     url: string;
 }
