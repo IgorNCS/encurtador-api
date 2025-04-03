@@ -6,12 +6,21 @@ import { UpdateLinkDto } from './dto/request/update-link.dto';
 import { PaginationLinkRequest } from './dto/request/findall-link.dto';
 import { LinkResponseDTO } from './dto/response/link.response.dto';
 import { NotFoundException } from '@nestjs/common';
+import { UserService } from '../user/user.service';
 
 describe('Link Controller', () => {
   let controller: LinkController;
   let service: LinkService;
 
   const mockLinkService = () => ({
+    create: jest.fn(),
+    findAll: jest.fn(),
+    findOne: jest.fn(),
+    update: jest.fn(),
+    remove: jest.fn(),
+  });
+
+  const mockUserService = () => ({
     create: jest.fn(),
     findAll: jest.fn(),
     findOne: jest.fn(),
@@ -26,6 +35,10 @@ describe('Link Controller', () => {
         {
           provide: LinkService,
           useFactory: mockLinkService,
+        },
+        {
+          provide: UserService,
+          useFactory: mockUserService,
         },
       ],
     }).compile();
