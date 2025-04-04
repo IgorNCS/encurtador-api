@@ -6,10 +6,10 @@ services:
     environment:
       - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
       - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
-      - KC_DB=postgres
+      - KC_DB=${KC_DB}
       - KC_DB_URL=jdbc:postgresql://postgres-keycloak:5432/keycloak
-      - KC_DB_USERNAME=keycloak
-      - KC_DB_PASSWORD=keycloak
+      - KC_DB_USERNAME=${KC_DB_USERNAME}
+      - KC_DB_PASSWORD=${KC_DB_PASSWORD}
     ports:
       - "8080:8080"
     command: start-dev
@@ -23,9 +23,9 @@ services:
     image: postgres:14
     container_name: keycloak-postgres
     environment:
-      - POSTGRES_DB=keycloak # Banco de dados do Keycloak
-      - POSTGRES_USER=keycloak
-      - POSTGRES_PASSWORD=keycloak
+      - POSTGRES_DB=${KC_DB_NAME} # Banco de dados do Keycloak
+      - POSTGRES_USER=${KC_DB_USERNAME}
+      - POSTGRES_PASSWORD=${KC_DB_USERNAME}
     volumes:
       - postgres_data_keycloak:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
@@ -46,6 +46,31 @@ services:
       - postgres_data_app:/var/lib/postgresql/data
     ports:
       - "5433:5432" # Porta diferente para evitar conflitos
+    networks:
+      - app_network
+
+  # # Serviço da aplicação NestJS
+  nest-app:
+    image: node:14
+    container_name: nest-app
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - .:/usr/src/app
+    working_dir: /usr/src/app
+    command: >
+      sh -c "
+        echo 'Instalando dependências...' &&
+        yarn install &&
+        echo 'Dependências instaladas com sucesso!' &&
+        echo 'Iniciando aplicação NestJS...' &&
+        yarn start:dev
+        "
+     
+    depends_on:
+      - postgres-app
+    ports:
+      - "3000:3000"
     networks:
       - app_network
 

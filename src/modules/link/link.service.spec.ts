@@ -54,7 +54,7 @@ describe('LinkService', () => {
                 clicks: 0,
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                userId: user.sid,
+                userId: user.sub,
             };
 
             jest.spyOn(repository, 'save').mockResolvedValue(savedLink as Link);
@@ -81,7 +81,7 @@ describe('LinkService', () => {
                     clicks: 0,
                     createdAt: new Date(),
                     updatedAt: new Date(),
-                    userId: user.sid,
+                    userId: user.sub,
                 },
                 {
                     id: 'e7d3c6c4-3b6d-4e7a-9eae-64c93f9f7f4g',
@@ -90,7 +90,7 @@ describe('LinkService', () => {
                     clicks: 0,
                     createdAt: new Date(),
                     updatedAt: new Date(),
-                    userId: user.sid,
+                    userId: user.sub,
                 },
             ];
 
@@ -99,7 +99,7 @@ describe('LinkService', () => {
             const result = await service.findAll(findAllQuery);
 
             expect(repository.findAndCount).toHaveBeenCalledWith({
-                where: { userId: user.sid },
+                where: { userId: user.sub },
                 order: { createdAt: 'DESC' },
                 take: findAllQuery.limit,
                 skip: findAllQuery.offset,

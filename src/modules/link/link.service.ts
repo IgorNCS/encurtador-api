@@ -19,7 +19,7 @@ export class LinkService {
     try {
       const link = new Link();
       const user = this.userService.getOrNull();
-      if(user) link.userId = user.sid
+      if(user) link.userId = user.sub
 
 
       link.originalURL = createLinkDto.url;
@@ -37,7 +37,7 @@ export class LinkService {
       const { initialDate, finalDate, page = 1, limit = 10 } = query;
       const where: any = {};
       const user = this.userService.get();
-      where.userId = user.sid;
+      where.userId = user.sub;
       if (initialDate && finalDate) {
         where.createdAt = Between(initialDate, finalDate);
       }
@@ -141,7 +141,7 @@ export class LinkService {
   private async findLinkByIdAndUser(id: string): Promise<Link> {
     const user = this.userService.get();
     const link = await this.modelRepository.findOne({
-        where: { id: id, userId: user.sid },
+        where: { id: id, userId: user.sub },
     });
     if (!link) {
         throw new NotFoundException('Link not found');
